@@ -16,33 +16,28 @@
         pkgs = import nixpkgs {
           inherit system;
         };
-        name = "puzzel";
+        hPkgs = pkgs.haskell.packages.ghc912;
+        name = "wordle";
         src = ./.;
       in {
-        packages.default = derivation {
-          inherit system name src;
-          builder = with pkgs; "${bash}/bin/bash";
-          args = ["-c" "echo foo > $out"];
-        };
-        devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            gnumake
-            llvmPackages_16.libllvm
-            llvmPackages_16.bintools
-            llvmPackages_16.libcxxClang
+        packages.default = hPkgs.callCabal2nix name src {};
 
-            haskell.compiler.ghc912
+        devShells.default = hPkgs.shellFor {
+          packages = p: [self.packages.${system}.default];
+          nativeBuildInputs = with pkgs; [
             haskell.packages.ghc912.haskell-language-server
+
+            cabal-install
+            hlint
+            fourmolu
+            alex
+            happy
+
+            haskellPackages.fast-tags
             haskellPackages.hoogle
             haskellPackages.ghci-dap
             haskellPackages.haskell-debug-adapter
-            haskellPackages.fast-tags
-            haskellPackages.alex
-            haskellPackages.happy
             haskellPackages.cabal-fmt
-            haskellPackages.fourmolu
-            cabal-install
-            hlint
           ];
         };
       }
